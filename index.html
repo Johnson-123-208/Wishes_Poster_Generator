@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Premium Greeting Card Generator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Cormorant+Garamond:wght@300;400;600;700&family=Poppins:wght@300;400;500;600&family=Great+Vibes&family=Cinzel:wght@700;900&family=Dancing+Script:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%);min-height:100vh;padding:20px;color:#fff;}
+.container{max-width:1600px;margin:auto;}
+.header{text-align:center;margin-bottom:40px;}
+.header h1{font-family:'Playfair Display',serif;font-size:3rem;background:linear-gradient(135deg,#FFD700,#FFA500);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.header p{font-size:1.1rem;color:#FFD700;opacity:.9;}
+.main-content{display:grid;grid-template-columns:420px 1fr;gap:30px;align-items:start;}
+@media(max-width:1200px){.main-content{grid-template-columns:1fr;}}
+
+/* CONTROL PANEL */
+.control-panel{background:rgba(255,255,255,.95);border-radius:20px;padding:35px;box-shadow:0 20px 60px rgba(0,0,0,.3);backdrop-filter:blur(10px);max-height:90vh;overflow-y:auto;}
+.control-panel h2{font-family:'Playfair Display',serif;color:#1a1a2e;margin-bottom:25px;font-size:1.8rem;font-weight:700;}
+.form-group{margin-bottom:20px;}
+.form-group label{display:block;margin-bottom:8px;color:#333;font-weight:600;font-size:.9rem;}
+.form-group input,.form-group textarea,.form-group select{width:100%;padding:12px 14px;border:2px solid #e0e0e0;border-radius:10px;font-family:'Poppins',sans-serif;transition:.3s;background:#fff;font-size:.95rem;}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:none;border-color:#FFD700;box-shadow:0 0 0 3px rgba(255,215,0,.1);}
+.file-upload{position:relative;}
+.file-upload input[type=file]{display:none;}
+.file-upload-label{display:block;padding:12px 14px;background:linear-gradient(135deg,#f8f9fa,#e9ecef);border:2px dashed #ccc;border-radius:10px;text-align:center;cursor:pointer;transition:.3s;font-weight:500;font-size:.9rem;}
+.file-upload-label:hover{background:linear-gradient(135deg,#e9ecef,#dee2e6);border-color:#FFD700;}
+.selector-group{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:20px;}
+.selector-btn{padding:12px 10px;border:2px solid #e0e0e0;border-radius:10px;background:#fff;cursor:pointer;font-weight:600;transition:.3s;text-align:center;font-size:.9rem;}
+.selector-btn:hover{border-color:#FFD700;transform:translateY(-2px);box-shadow:0 5px 15px rgba(255,215,0,.3);}
+.selector-btn.active{background:linear-gradient(135deg,#FFD700,#FFA500);color:#fff;border-color:#FFD700;box-shadow:0 5px 20px rgba(255,215,0,.4);}
+.format-selector{display:flex;gap:10px;margin-bottom:20px;}
+.format-btn{flex:1;padding:12px;border:2px solid #e0e0e0;border-radius:10px;background:#fff;cursor:pointer;font-weight:600;transition:.3s;font-size:.9rem;}
+.format-btn:hover{border-color:#FFD700;}
+.format-btn.active{background:linear-gradient(135deg,#FFD700,#FFA500);color:#fff;border-color:#FFD700;}
+.action-buttons{display:flex;gap:12px;margin-top:25px;}
+.btn{flex:1;padding:16px;border:none;border-radius:10px;font-weight:700;font-size:1rem;cursor:pointer;transition:.3s;text-transform:uppercase;letter-spacing:1px;}
+.btn-primary{background:linear-gradient(135deg,#FFD700,#FFA500);color:#1a1a2e;box-shadow:0 5px 20px rgba(255,215,0,.3);}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(255,215,0,.5);}
+.btn-secondary{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;box-shadow:0 5px 20px rgba(0,0,0,.3);}
+.btn-secondary:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,0,0,.5);}
+.download-progress{margin-top:15px;padding:12px;background:#f0f7ff;border-radius:8px;text-align:center;color:#1a1a2e;font-weight:600;display:none;font-size:.9rem;}
+.download-progress.show{display:block;}
+.hidden{display:none !important;}
+
+/* CARD BASE */
+.preview-container{background:rgba(255,255,255,.05);border-radius:20px;padding:40px;box-shadow:0 20px 60px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;min-height:700px;backdrop-filter:blur(10px);}
+.greeting-card{width:800px;height:1110px;position:relative;overflow:hidden;background:#fff;box-shadow:0 25px 80px rgba(0,0,0,.3);border-radius:10px;font-size:16px;}
+
+/* PHOTO POSITIONING - Circular container */
+.photo-wrapper{
+    position:absolute;
+    z-index:5;
+    padding:6px;
+    background:linear-gradient(135deg,#FFD700,#FFA500);
+    border-radius:50%;
+    box-shadow:0 15px 40px rgba(0,0,0,.4), 0 0 0 4px rgba(255,255,255,.95), 0 0 0 8px rgba(255,215,0,.3);
+    transition:all 0.3s ease;
+    width:200px;
+    height:200px;
+}
+.photo-wrapper.dragging{
+    z-index:1000;
+    opacity:0.8;
+    cursor:move;
+    box-shadow:0 20px 50px rgba(0,0,0,.6), 0 0 0 4px rgba(255,255,255,.95), 0 0 0 8px rgba(255,215,0,.5);
+}
+.card-photo{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    border-radius:50%;
+    display:block;
+    pointer-events:none;
+}
+.photo-wrapper.photo-top{top:80px;left:50%;transform:translateX(-50%);z-index:4;}
+.photo-wrapper.photo-left{left:50px;top:200px;z-index:4;}
+.photo-wrapper.photo-right{right:50px;top:200px;z-index:4;}
+
+/* DRAGGABLE IN EDIT MODE */
+.edit-mode .photo-wrapper{
+    cursor:move;
+    user-select:none;
+}
+.edit-mode .photo-wrapper:hover{
+    box-shadow:0 20px 50px rgba(0,0,0,.6), 0 0 0 5px rgba(255,215,0,.8);
+}
+
+/* RESIZE HANDLES */
+.resize-handle{
+    position:absolute;
+    width:20px;
+    height:20px;
+    background:#FFD700;
+    border:3px solid #fff;
+    border-radius:50%;
+    cursor:pointer;
+    z-index:1001;
+    display:none;
+    box-shadow:0 2px 8px rgba(0,0,0,.3);
+}
+.edit-mode .resize-handle{display:block;}
+.resize-handle:hover{
+    background:#FFA500;
+    transform:scale(1.2);
+}
+.resize-handle.nw{top:-10px;left:-10px;cursor:nw-resize;}
+.resize-handle.ne{top:-10px;right:-10px;cursor:ne-resize;}
+.resize-handle.sw{bottom:-10px;left:-10px;cursor:sw-resize;}
+.resize-handle.se{bottom:-10px;right:-10px;cursor:se-resize;}
+
+/* TEXT ELEMENTS */
+.border-frame{position:absolute;top:30px;left:30px;right:30px;bottom:30px;pointer-events:none;z-index:1;}
+.card-header{position:relative;z-index:10;pointer-events:none;}
+.card-body{position:relative;z-index:10;pointer-events:none;}
+.card-footer{position:absolute;bottom:50px;left:0;right:0;z-index:10;text-align:center;pointer-events:none;}
+.card-title,.subtitle,.recipient-name,.message,.closing,.sender-name,.ornament{position:relative;z-index:15;}
+
+/* TEMPLATE 1 - Royal Purple */
+.theme-template1{
+    background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+}
+.theme-template1 .border-frame{border:4px solid rgba(255,255,255,.3);border-radius:12px;}
+.theme-template1 .card-header{padding:320px 60px 30px;text-align:center;}
+.theme-template1 .card-title{font-family:'Cinzel',serif;font-size:4.1rem;color:#fff;text-shadow:0 4px 15px rgba(0,0,0,.4);letter-spacing:3px;margin-bottom:15px;}
+.theme-template1 .subtitle{font-family:'Great Vibes',cursive;font-size:2.4rem;color:#FFD700;}
+.theme-template1 .card-body{padding:30px 80px 10px;text-align:center;}
+.theme-template1 .recipient-name{font-family:'Playfair Display',serif;font-size:3.2rem;color:#FFD700;margin:1px 0 1px;font-weight:700;}
+.theme-template1 .ornament{width:120px;height:4px;background:linear-gradient(90deg,transparent,#FFD700,transparent);margin:25px auto;}
+.theme-template1 .message{font-family:'Cormorant Garamond',serif;font-size:1.65rem;line-height:2.1;color:#fff;margin:30px auto;max-width:600px;}
+.theme-template1 .closing{font-family:'Great Vibes',cursive;font-size:2.5rem;color:#FFD700;margin-bottom:12px;}
+.theme-template1 .sender-name{font-family:'Playfair Display',serif;font-size:1.8rem;color:#fff;font-weight:600;}
+
+/* TEMPLATE 2 - Golden Luxury */
+.theme-template2{background:#fff;}
+.theme-template2::before{content:'';position:absolute;top:0;left:0;right:0;height:350px;background:linear-gradient(135deg,#FFD700 0%,#FFA500 100%);clip-path:polygon(0 0,100% 0,100% 85%,0 100%);z-index:0;}
+.theme-template2 .border-frame{border:5px double #D4AF37;border-radius:12px;}
+.theme-template2 .card-header{padding:350px 70px 30px;text-align:center;position:relative;z-index:5;}
+.theme-template2 .card-title{font-family:'Cinzel',serif;font-size:4.1rem;color:#1a1a2e;text-shadow:2px 2px 0 #FFD700;letter-spacing:4px;margin-bottom:15px;}
+.theme-template2 .subtitle{font-family:'Great Vibes',cursive;font-size:2.6rem;color:#D4AF37;}
+.theme-template2 .card-body{padding:5px 90px 0px;text-align:center;position:relative;z-index:5;}
+.theme-template2 .recipient-name{font-family:'Playfair Display',serif;font-size:3.5rem;color:#1a1a2e;margin:0px 0 0px;font-weight:700;}
+.theme-template2 .ornament{width:150px;height:4px;background:linear-gradient(90deg,transparent,#D4AF37,transparent);margin:28px auto;}
+.theme-template2 .message{font-family:'Cormorant Garamond',serif;font-size:1.7rem;line-height:2.15;color:#333;margin:32px auto;max-width:650px;}
+.theme-template2 .closing{font-family:'Great Vibes',cursive;font-size:2.6rem;color:#D4AF37;margin-bottom:15px;}
+.theme-template2 .sender-name{font-family:'Playfair Display',serif;font-size:1.9rem;color:#1a1a2e;font-weight:600;}
+
+/* TEMPLATE 3 - Modern Minimalist */
+.theme-template3{background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%);}
+.theme-template3 .border-frame{border:3px solid #667eea;border-radius:8px;}
+.theme-template3 .card-header{padding:320px 60px 30px;text-align:center;}
+.theme-template3 .card-title{font-family:'Playfair Display',serif;font-size:4.1rem;color:#667eea;letter-spacing:2px;margin-bottom:18px;}
+.theme-template3 .subtitle{font-family:'Dancing Script',cursive;font-size:2.5rem;color:#764ba2;margin-bottom:28px;}
+.theme-template3 .card-body{padding:28px 85px 10px;text-align:center;}
+.theme-template3 .recipient-name{font-family:'Playfair Display',serif;font-size:3.3rem;color:#667eea;margin:0px 0 26px;font-weight:700;}
+.theme-template3 .ornament{width:100px;height:3px;background:#667eea;margin:26px auto;}
+.theme-template3 .message{font-family:'Cormorant Garamond',serif;font-size:1.6rem;line-height:2;color:#333;margin:28px auto;max-width:600px;}
+.theme-template3 .closing{font-family:'Dancing Script',cursive;font-size:2.6rem;color:#764ba2;margin-bottom:12px;}
+.theme-template3 .sender-name{font-family:'Poppins',sans-serif;font-size:1.7rem;color:#667eea;font-weight:600;}
+
+/* TEMPLATE 4 - Romantic Blush */
+.theme-template4{background:linear-gradient(135deg,#ffecd2 0%,#fcb69f 100%);}
+.theme-template4 .border-frame{border:4px solid #ff6b9d;border-radius:10px;}
+.theme-template4 .card-header{padding:320px 65px 30px;text-align:center;}
+.theme-template4 .card-title{font-family:'Playfair Display',serif;font-size:4.1rem;color:#c41e3a;letter-spacing:2.5px;margin-bottom:16px;}
+.theme-template4 .subtitle{font-family:'Great Vibes',cursive;font-size:2.5rem;color:#ff6b9d;margin-bottom:30px;}
+.theme-template4 .card-body{padding:32px 88px 10px;text-align:center;}
+.theme-template4 .recipient-name{font-family:'Playfair Display',serif;font-size:3.4rem;color:#c41e3a;margin:0 0 27px;font-weight:700;}
+.theme-template4 .ornament{width:130px;height:3px;background:linear-gradient(90deg,transparent,#ff6b9d,transparent);margin:27px auto;}
+.theme-template4 .message{font-family:'Cormorant Garamond',serif;font-size:1.68rem;line-height:2.1;color:#5a2d3e;margin:30px auto;max-width:620px;}
+.theme-template4 .closing{font-family:'Great Vibes',cursive;font-size:2.6rem;color:#ff6b9d;margin-bottom:14px;}
+.theme-template4 .sender-name{font-family:'Playfair Display',serif;font-size:1.85rem;color:#c41e3a;font-weight:600;}
+
+/* TEMPLATE 5 - Ocean Breeze */
+.theme-template5{background:linear-gradient(135deg,#0a3d62 0%,#1e3a3a 100%);}
+.theme-template5 .border-frame{border:4px solid #50C878;border-radius:10px;}
+.theme-template5 .card-header{padding:320px 60px 30px;text-align:center;}
+.theme-template5 .card-title{font-family:'Cinzel',serif;font-size:4.1rem;color:#50C878;text-shadow:0 0 25px rgba(80,200,120,.6);letter-spacing:3px;margin-bottom:16px;}
+.theme-template5 .subtitle{font-family:'Great Vibes',cursive;font-size:2.4rem;color:#90EE90;margin-bottom:28px;}
+.theme-template5 .card-body{padding:30px 80px 10px;text-align:center;}
+.theme-template5 .recipient-name{font-family:'Playfair Display',serif;font-size:3.3rem;color:#50C878;margin:0px 0 26px;font-weight:700;}
+.theme-template5 .ornament{width:135px;height:3px;background:linear-gradient(90deg,transparent,#50C878,transparent);margin:26px auto;}
+.theme-template5 .message{font-family:'Cormorant Garamond',serif;font-size:1.65rem;line-height:2.1;color:#fff;margin:28px auto;max-width:600px;}
+.theme-template5 .closing{font-family:'Great Vibes',cursive;font-size:2.5rem;color:#50C878;margin-bottom:12px;}
+.theme-template5 .sender-name{font-family:'Playfair Display',serif;font-size:1.8rem;color:#fff;font-weight:600;}
+
+/* TEMPLATE 6 - Sunset Warmth */
+.theme-template6{background:linear-gradient(135deg,#8B4513 0%,#D2691E 50%,#A0522D 100%);}
+.theme-template6 .border-frame{border:4px solid #FFE4B5;border-radius:10px;}
+.theme-template6 .card-header{padding:320px 62px 30px;text-align:center;}
+.theme-template6 .card-title{font-family:'Cinzel',serif;font-size:4.1rem;color:#FFF8DC;text-shadow:0 0 28px rgba(255,248,220,.6);letter-spacing:3.5px;margin-bottom:17px;}
+.theme-template6 .subtitle{font-family:'Great Vibes',cursive;font-size:2.5rem;color:#FFE4B5;margin-bottom:29px;}
+.theme-template6 .card-body{padding:31px 85px 10px;text-align:center;}
+.theme-template6 .recipient-name{font-family:'Playfair Display',serif;font-size:3.4rem;color:#FFF8DC;margin:0px 0 27px;font-weight:700;}
+.theme-template6 .ornament{width:140px;height:4px;background:linear-gradient(90deg,transparent,#FFE4B5,transparent);margin:27px auto;}
+.theme-template6 .message{font-family:'Cormorant Garamond',serif;font-size:1.67rem;line-height:2.1;color:#fff;margin:29px auto;max-width:620px;}
+.theme-template6 .closing{font-family:'Great Vibes',cursive;font-size:2.6rem;color:#FFE4B5;margin-bottom:13px;}
+.theme-template6 .sender-name{font-family:'Cinzel',serif;font-size:1.9rem;color:#FFF8DC;font-weight:700;}
+
+/* TEMPLATE 7 - Elegant Black & Gold */
+.theme-template7{background:linear-gradient(135deg,#1a1a1a 0%,#2d2d2d 100%);}
+.theme-template7 .border-frame{border:5px double #FFD700;border-radius:12px;}
+.theme-template7 .card-header{padding:320px 65px 30px;text-align:center;}
+.theme-template7 .card-title{font-family:'Cinzel',serif;font-size:4.1rem;color:#FFD700;text-shadow:0 0 32px rgba(255,215,0,.7);letter-spacing:4px;margin-bottom:18px;}
+.theme-template7 .subtitle{font-family:'Great Vibes',cursive;font-size:2.6rem;color:#fff;margin-bottom:30px;}
+.theme-template7 .card-body{padding:33px 90px 10px;text-align:center;}
+.theme-template7 .recipient-name{font-family:'Playfair Display',serif;font-size:3.5rem;color:#FFD700;margin:5px 0 28px;font-weight:700;}
+.theme-template7 .ornament{width:125px;height:4px;background:#fff;margin:28px auto;}
+.theme-template7 .message{font-family:'Cormorant Garamond',serif;font-size:1.7rem;line-height:2.15;color:#fff;margin:30px auto;max-width:650px;}
+.theme-template7 .closing{font-family:'Great Vibes',cursive;font-size:2.7rem;color:#FFD700;margin-bottom:14px;}
+.theme-template7 .sender-name{font-family:'Playfair Display',serif;font-size:1.9rem;color:#fff;font-weight:700;}
+
+/* TEMPLATE 8 - Fresh Mint */
+/* TEMPLATE 8 - Professional Mint */
+.theme-template8 {
+    background: #F8FAFC; /* Clean, light gray background for professionalism */
+    background-image: none; /* Remove radial gradients for a flatter, modern look */
+}
+.theme-template8 .border-frame {
+    border: 4px solid #2D6A4F; /* Deep muted teal for sophistication */
+    border-radius: 10px; /* Slightly tighter radius for a modern edge */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+.theme-template8 .card-header {
+    padding: 320px 60px 30px; /* Match template1 */
+    text-align: center;
+}
+.theme-template8 .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 4.1rem; /* Retain size for prominence */
+    color: #1A3C34; /* Dark teal for elegance */
+    text-shadow: none; /* Remove shadow for cleaner look */
+    letter-spacing: 2px; /* Slightly tighter for formality */
+    margin-bottom: 16px;
+}
+.theme-template8 .subtitle {
+    font-family: 'Playfair Display', serif; /* Swap 'Great Vibes' for formal serif */
+    font-size: 2.4rem; /* Slightly smaller for balance */
+    color: #4B8673; /* Muted teal for consistency */
+    margin-bottom: 28px;
+}
+.theme-template8 .card-body {
+    padding: 30px 80px 50px; /* Match template1 */
+    text-align: center;
+}
+.theme-template8 .recipient-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.2rem; /* Slightly smaller for professionalism */
+    color: #1A3C34; /* Dark teal */
+    margin: 1px 0 1px; /* Match template1 */
+    font-weight: 700;
+}
+.theme-template8 .ornament {
+    width: 100px; /* Simpler, narrower ornament */
+    height: 3px; /* Thinner for subtlety */
+    background: #4B8673; /* Muted teal */
+    margin: 25px auto; /* Match template1 */
+    position: relative;
+}
+.theme-template8 .ornament::before,
+.theme-template8 .ornament::after {
+    display: none; /* Remove decorative X-shape for minimalism */
+}
+.theme-template8 .message {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.65rem; /* Retain for readability */
+    line-height: 2.1;
+    color: #333; /* Keep dark for contrast */
+    margin: 30px auto; /* Match template1 */
+    max-width: 600px;
+}
+.theme-template8 .closing {
+    font-family: 'Playfair Display', serif; /* Swap 'Great Vibes' for formal */
+    font-size: 2.4rem; /* Slightly smaller */
+    color: #4B8673; /* Muted teal */
+    margin-bottom: 12px; /* Match template1 */
+}
+.theme-template8 .sender-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem; /* Slightly smaller */
+    color: #1A3C34; /* Dark teal */
+    font-weight: 600;
+}
+
+/* RESPONSIVE */
+@media(max-width:1200px){
+    .greeting-card{width:100%;max-width:650px;height: 1400px;}
+    [class^="theme-"] .card-title{font-size:3.6rem;}
+    [class^="theme-"] .recipient-name{font-size:2.5rem;}
+    [class^="theme-"] .message{font-size:1.35rem;line-height:1.9;}
+    [class^="theme-"] .card-header{padding:260px 45px 25px;}
+    [class^="theme-"] .card-body{padding:20px 55px 55px;}
+    .photo-wrapper{width:150px;height:150px;}
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Premium Greeting Card Generator</h1>
+        <p>Create Beautiful Personalized Cards</p>
+    </div>
+
+    <div class="main-content">
+        <!-- CONTROL PANEL -->
+        <div class="control-panel">
+            <h2>Customize Your Card</h2>
+
+            <div class="form-group">
+                <label for="senderName">Your Name</label>
+                <input type="text" id="senderName" placeholder="Enter your name">
+            </div>
+
+            <div class="form-group">
+                <label for="recipientName">Recipient Name</label>
+                <input type="text" id="recipientName" placeholder="Enter recipient's name">
+            </div>
+
+            <div class="form-group">
+                <label>Wish Type</label>
+                <div class="selector-group">
+                    <button class="selector-btn active" data-wish="birthday">Birthday</button>
+                    <button class="selector-btn" data-wish="anniversary">Anniversary</button>
+                    <button class="selector-btn" data-wish="wedding">Wedding</button>
+                    <button class="selector-btn" data-wish="graduation">Graduation</button>
+                    <button class="selector-btn" data-wish="retirement">Retirement</button>
+                    <button class="selector-btn" data-wish="newyear">New Year</button>
+                    <button class="selector-btn" data-wish="congratulations">Congratulations</button>
+                    <button class="selector-btn" data-wish="thankyou">Thank You</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Tone</label>
+                <div class="selector-group">
+                    <button class="selector-btn active" data-tone="professional">Professional</button>
+                    <button class="selector-btn" data-tone="friendly">Friendly</button>
+                </div>
+            </div>
+
+            <div class="form-group" id="relationshipGroup">
+                <label>Recipient Type</label>
+                <div class="selector-group">
+                    <button class="selector-btn active" data-recipient="general">General</button>
+                    <button class="selector-btn" data-recipient="relative">Relative</button>
+                    <button class="selector-btn" data-recipient="friend">Friend</button>
+                    <button class="selector-btn" data-recipient="colleague">Colleague</button>
+                </div>
+            </div>
+
+            <div class="form-group hidden" id="relationGroup">
+                <label for="relation">Relation</label>
+                <select id="relation">
+                    <option value="">Select relation</option>
+                    <option value="mom">Mom</option>
+                    <option value="dad">Dad</option>
+                    <option value="brother">Brother</option>
+                    <option value="sister">Sister</option>
+                    <option value="spouse">Spouse</option>
+                    <option value="child">Child</option>
+                    <option value="grandparent">Grandparent</option>
+                    <option value="uncle">Uncle/Aunt</option>
+                    <option value="cousin">Cousin</option>
+                    <option value="nephew">Nephew/Niece</option>
+                </select>
+            </div>
+
+            <div class="form-group hidden" id="closenessGroup">
+                <label>How Close?</label>
+                <div class="selector-group">
+                    <button class="selector-btn" data-closeness="very-close">Very Close</button>
+                    <button class="selector-btn" data-closeness="close">Close</button>
+                    <button class="selector-btn" data-closeness="moderate">Moderate</button>
+                    <button class="selector-btn" data-closeness="distant">Distant</button></button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label style="color:#FF6B6B;font-weight:700;">📷 Add Photo (Optional)</label>
+                <div class="file-upload">
+                    <input type="file" id="photoUpload" accept="image/*">
+                    <label for="photoUpload" class="file-upload-label" style="border:2px dashed #FFD700;background:linear-gradient(135deg,#fff9e6,#fffbf0);">
+                        <span id="photoFileName" style="color:#333;">📁 Click to upload photo (PNG/JPG)</span>
+                    </label>
+                </div>
+                <small style="color:#666;font-size:0.8rem;display:block;margin-top:5px;">Photo will appear in a circular frame. Use Live Editor to position & resize.</small>
+            </div>
+<!-- 
+            <div class="form-group">
+                <label>Editor Mode</label>
+                <div class="selector-group">
+                    <button class="selector-btn active" id="previewModeBtn" data-mode="preview">Preview</button>
+                    <button class="selector-btn" id="editModeBtn" data-mode="edit">Live Editor</button>
+                </div>
+                <small style="color:#666;font-size:0.8rem;display:block;margin-top:5px;">Live Editor: Drag photo to reposition, use corner handles to resize</small>
+            </div> -->
+
+            <div class="form-group">
+                <label>Custom Message (Optional)</label>
+                <textarea id="customMessage" rows="4" placeholder="Leave blank for auto-generated message..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Select Template <span id="templateCount">(1-8)</span></label>
+                <div class="selector-group" id="templateSelector">
+                    <button class="selector-btn active" data-template="template1">Template 1 - Royal Purple</button>
+                    <button class="selector-btn" data-template="template2">Template 2 - Golden Luxury</button>
+                    <button class="selector-btn" data-template="template3">Template 3 - Minimalist</button>
+                    <button class="selector-btn" data-template="template4">Template 4 - Romantic Blush</button>
+                    <button class="selector-btn" data-template="template5">Template 5 - Ocean Breeze</button>
+                    <button class="selector-btn" data-template="template6">Template 6 - Sunset Warmth</button>
+                    <button class="selector-btn" data-template="template7">Template 7 - Black & Gold</button>
+                    <button class="selector-btn" data-template="template8">Template 8 - Fresh Mint</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Output Format</label>
+                <div class="format-selector">
+                    <button class="format-btn active" data-format="png">PNG</button>
+                    <button class="format-btn" data-format="jpg">JPG</button>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="previewBtn" class="btn btn-secondary">Preview</button>
+                <button id="downloadBtn" class="btn btn-primary">Download</button>
+            </div>
+
+            <div id="progress" class="download-progress">Generating your card...</div>
+        </div>
+
+        <!-- PREVIEW AREA -->
+        <div class="preview-container">
+            <div id="greetingCard" class="greeting-card theme-template1">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// State management
+const state = {
+    senderName: '',
+    recipientName: '',
+    wishType: 'birthday',
+    tone: 'professional',
+    recipientType: 'general',
+    relation: '',
+    closeness: '',
+    currentPhoto: null,
+    customMessage: '',
+    selectedTemplate: 'template1',
+    selectedFormat: 'png',
+    photoStyle: ''
+};
+
+// DOM Elements
+const card = document.getElementById('greetingCard');
+const senderNameInput = document.getElementById('senderName');
+const recipientNameInput = document.getElementById('recipientName');
+const wishBtns = document.querySelectorAll('[data-wish]');
+const toneBtns = document.querySelectorAll('[data-tone]');
+const recipientBtns = document.querySelectorAll('[data-recipient]');
+const relationSelect = document.getElementById('relation');
+const closenessBtns = document.querySelectorAll('[data-closeness]');
+const photoInput = document.getElementById('photoUpload');
+const photoFileName = document.getElementById('photoFileName');
+const relationGroup = document.getElementById('relationGroup');
+const closenessGroup = document.getElementById('closenessGroup');
+const customMessageInput = document.getElementById('customMessage');
+const templateBtns = document.querySelectorAll('[data-template]');
+const formatBtns = document.querySelectorAll('[data-format]');
+const previewBtn = document.getElementById('previewBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const progress = document.getElementById('progress');
+const previewModeBtn = document.getElementById('previewModeBtn');
+const editModeBtn = document.getElementById('editModeBtn');
+
+// Event Listeners
+senderNameInput.addEventListener('input', (e) => { state.senderName = e.target.value.trim(); renderCard(); });
+recipientNameInput.addEventListener('input', (e) => { state.recipientName = e.target.value.trim(); renderCard(); });
+customMessageInput.addEventListener('input', (e) => { state.customMessage = e.target.value.trim(); renderCard(); });
+
+wishBtns.forEach(btn => btn.addEventListener('click', () => {
+    wishBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.wishType = btn.dataset.wish;
+    renderCard();
+}));
+
+toneBtns.forEach(btn => btn.addEventListener('click', () => {
+    toneBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.tone = btn.dataset.tone;
+    renderCard();
+}));
+
+recipientBtns.forEach(btn => btn.addEventListener('click', () => {
+    recipientBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.recipientType = btn.dataset.recipient;
+    if (state.recipientType === 'relative') {
+        relationGroup.classList.remove('hidden');
+        closenessGroup.classList.remove('hidden');
+    } else {
+        relationGroup.classList.add('hidden');
+        closenessGroup.classList.add('hidden');
+        state.relation = '';
+        state.closeness = '';
+    }
+    renderCard();
+}));
+
+relationSelect.addEventListener('change', (e) => {
+    state.relation = e.target.value;
+    renderCard();
+});
+
+closenessBtns.forEach(btn => btn.addEventListener('click', () => {
+    closenessBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.closeness = btn.dataset.closeness;
+    renderCard();
+}));
+
+photoInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 10 * 1024 * 1024) {
+        alert('File too large! Please use images under 10MB.');
+        photoInput.value = '';
+        return;
+    }
+    
+    if (!file.type.match('image.*')) {
+        alert('Please select a valid image file.');
+        photoInput.value = '';
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        state.currentPhoto = ev.target.result;
+        photoFileName.textContent = file.name;
+        renderCard();
+        if (!card.classList.contains('edit-mode')) {
+            editModeBtn.click();
+        }
+    };
+    reader.onerror = function() {
+        alert('Error reading file. Please try again.');
+        photoInput.value = '';
+    };
+    reader.readAsDataURL(file);
+});
+
+templateBtns.forEach(btn => btn.addEventListener('click', () => {
+    templateBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.selectedTemplate = btn.dataset.template;
+    state.photoStyle = ''; // Reset photo position on template change
+    renderCard();
+}));
+
+formatBtns.forEach(btn => btn.addEventListener('click', () => {
+    formatBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.selectedFormat = btn.dataset.format;
+}));
+
+previewBtn.addEventListener('click', renderCard);
+downloadBtn.addEventListener('click', downloadCard);
+
+previewModeBtn.addEventListener('click', () => {
+    card.classList.remove('edit-mode');
+    previewModeBtn.classList.add('active');
+    editModeBtn.classList.remove('active');
+    renderCard();
+});
+
+editModeBtn.addEventListener('click', () => {
+    card.classList.add('edit-mode');
+    editModeBtn.classList.add('active');
+    previewModeBtn.classList.remove('active');
+    renderCard();
+});
+
+// Message Generation
+function generateMessage() {
+    if (state.customMessage) return state.customMessage;
+    
+    const messages = {
+    birthday: {
+        professional: {
+            general: "Happy Birthday! Wishing you a day full of joy and love, with many more beautiful years ahead.",
+            friend: "Happy Birthday, dear friend! Your smile lights up our lives, and I hope today brings you endless happiness.",
+            colleague: "Wishing you a fantastic birthday! Your hard work inspires us all, and I hope this year brings you success and joy.",
+            relative: {
+                'very-close': {
+                    mom: "Happy Birthday, Mom! Your love fills my heart every day, and I wish you all the happiness you deserve.",
+                    dad: "Happy Birthday, Dad! Your strength and care mean the world to me, and I hope today is as special as you are.",
+                    brother: "Happy Birthday, brother! You’re my rock, and I’m so grateful for you—here’s to a day full of love and laughter!",
+                    sister: "Happy Birthday, sis! You’re truly amazing, and I wish you a day overflowing with joy and love.",
+                    spouse: "Happy Birthday, my love! You make every moment better, and I’m so excited to celebrate you today.",
+                    child: "Happy Birthday, my sweet child! Watching you grow fills me with pride, and I wish you a day full of magic.",
+                    grandparent: "Happy Birthday, Grandma/Grandpa! Your wisdom and love are treasures, and I hope today brings you so much joy.",
+                    uncle: "Happy Birthday, Uncle/Aunt! Your warmth makes every moment special, and I wish you a truly wonderful day.",
+                    cousin: "Happy Birthday, cousin! You bring so much fun to our family, and I hope your day is full of love.",
+                    nephew: "Happy Birthday, little one! You’re such a joy, and I wish you a day filled with fun and smiles."
+                },
+                'close': "Happy Birthday! You mean so much to our family, and I hope your day is filled with love and warmth.",
+                'moderate': "Wishing you a joyful birthday! Your presence brightens our lives, and I hope today is truly special.",
+                'distant': "Happy Birthday! Thinking of you today and wishing you a wonderful day full of happiness."
+            }
+        },
+        friendly: {
+            general: "Happy Birthday! Hope your day is packed with love, laughs, and all your favorite things!",
+            friend: "Yo, Happy Birthday, buddy! You’re the best, and I can’t wait to celebrate you with tons of love!",
+            colleague: "Happy Birthday! Let’s celebrate you today—you deserve a day full of fun and happiness!",
+            relative: {
+                'very-close': {
+                    mom: "Happy Birthday, Mom! I love you tons and hope your day is as beautiful as your heart!",
+                    dad: "Happy Birthday, Dad! You’re my hero, and I’m wishing you the happiest day ever!",
+                    brother: "Happy Birthday, bro! You’re awesome, and I’m so lucky to have you—let’s make today epic!",
+                    sister: "Happy Birthday, sis! You’re my favorite person, and I hope your day is full of love and fun!",
+                    spouse: "Happy Birthday, my everything! You light up my world, and I can’t wait to make today unforgettable for you.",
+                    child: "Happy Birthday, my star! You make me so proud, and I hope your day is pure magic!",
+                    grandparent: "Happy Birthday, Grandma/Grandpa! Your love means everything, and I’m wishing you a super happy day!",
+                    uncle: "Happy Birthday! You’re the coolest, and I hope your day is filled with tons of joy!",
+                    cousin: "Happy Birthday, cuz! You make family time so fun—hope your day is awesome!",
+                    nephew: "Happy Birthday, champ! You’re such a joy, and I hope you have the best day ever!"
+                },
+                'close': "Happy Birthday! You’re so special to us—hope your day is full of love and good vibes!",
+                'moderate': "Happy Birthday! Wishing you a super fun day filled with love and smiles!",
+                'distant': "Happy Birthday! Hope you have a great day full of joy!"
+            }
+        }
+    },
+    anniversary: {
+        professional: {
+            general: "Happy Anniversary! Your love is truly inspiring, and I wish you many more years of happiness together.",
+            friend: "Happy Anniversary, dear friends! Your bond is beautiful, and I hope today is filled with love and joy.",
+            colleague: "Congratulations on your anniversary! Wishing you both a lifetime of shared dreams and endless love.",
+            relative: "Happy Anniversary! Your love lights up our family, and I wish you countless more years of joy."
+        },
+        friendly: {
+            general: "Happy Anniversary! You two are amazing together—here’s to a day full of love and celebration!",
+            friend: "Happy Anniversary, you lovebirds! So happy for you—let’s celebrate your awesome journey together!",
+            colleague: "Happy Anniversary! You guys are the best—hope your day is full of love and laughs!",
+            relative: "Happy Anniversary! Your love is so special, and I’m wishing you tons of happiness today and always!"
+        }
+    },
+    wedding: {
+        professional: {
+            general: "Congratulations on your wedding! May your life together be filled with love, respect, and endless joy.",
+            friend: "Congrats on tying the knot! Your love is beautiful, and I wish you a lifetime of happiness together.",
+            colleague: "Congratulations on your wedding! Wishing you both a journey full of love and shared successes.",
+            relative: "Congrats on your big day! Your love inspires us all, and I’m so excited for your happy future together."
+        },
+        friendly: {
+            general: "Congrats on your wedding! You two are perfect together—here’s to a lifetime of love and fun!",
+            friend: "You’re married! So thrilled for you both—let’s celebrate your love with tons of joy!",
+            colleague: "Congrats on your wedding! Wishing you guys all the love and happiness in the world!",
+            relative: "Congrats, you two! Your love is amazing, and I’m so excited for your beautiful life together!"
+        }
+    },
+    graduation: {
+        professional: {
+            general: "Congratulations on graduating! Your hard work shines, and I wish you a bright future full of success.",
+            friend: "You did it! So proud of your graduation—here’s to chasing your dreams with all my love!",
+            colleague: "Congrats on your graduation! Your dedication is inspiring, and I wish you success in all you do.",
+            relative: "Congratulations on graduating! We’re so proud of you and excited for all the amazing things you’ll do!"
+        },
+        friendly: {
+            general: "You graduated! So proud of you—here’s to a future full of big dreams and happy moments!",
+            friend: "Congrats, grad! You’re a rockstar, and I can’t wait to see all the awesome things you do!",
+            colleague: "You did it! Congrats on graduating—wishing you tons of success and fun ahead!",
+            relative: "You graduated! So incredibly proud of you—here’s to a bright future filled with love!"
+        }
+    },
+    retirement: {
+        professional: {
+            general: "Congratulations on your retirement! You’ve earned this time to relax, and I wish you joy in every new adventure.",
+            friend: "Happy Retirement! You’ve worked so hard, and I’m excited for all the fun you’ll have now!",
+            colleague: "Congrats on retiring! Your legacy inspires us, and I wish you a joyful, relaxing new chapter.",
+            relative: "Happy Retirement! You’ve done so much, and I’m so happy you get to enjoy life to the fullest now!"
+        },
+        friendly: {
+            general: "Congrats on retiring! Time to kick back and enjoy life—wishing you tons of love and fun!",
+            friend: "You retired! So excited for you—here’s to chilling and making new memories!",
+            colleague: "Congrats on retirement! Time to relax and have fun—wishing you all the best!",
+            relative: "You retired! So proud of you—here’s to tons of love and happy times ahead!"
+        }
+    },
+    newyear: {
+        professional: {
+            general: "Happy New Year! May this year bring you joy, health, and new dreams to chase with love.",
+            friend: "Happy New Year! Wishing you a year full of laughter, love, and amazing moments!",
+            colleague: "Wishing you a Happy New Year! May it bring you success and joy in all you do.",
+            relative: "Happy New Year! Your love means so much, and I hope this year is your best yet!"
+        },
+        friendly: {
+            general: "Happy New Year! Here’s to a year packed with love, fun, and all your favorite things!",
+            friend: "Happy New Year, buddy! Let’s make this year the best yet with tons of laughs and love!",
+            colleague: "Happy New Year! Wishing you an awesome year full of joy and good times!",
+            relative: "Happy New Year! Love you tons—hope this year brings you so much happiness!"
+        }
+    },
+    congratulations: {
+        professional: {
+            general: "Congratulations! Your hard work is truly inspiring, and I wish you even more success with love.",
+            friend: "Congrats! I’m so proud of you and can’t wait to see all the great things you do next!",
+            colleague: "Congratulations! Your success is amazing, and I wish you more victories with respect.",
+            relative: "Congrats! We’re so proud of you and sending you all our love for your bright future!"
+        },
+        friendly: {
+            general: "Congrats! You’re killing it, and I’m so excited for you—keep shining!",
+            friend: "Congrats, you rockstar! So proud of you—let’s celebrate this big win!",
+            colleague: "Congrats! You’re awesome, and I’m wishing you tons more success!",
+            relative: "Congrats! So proud of you and sending you all my love—you’re the best!"
+        }
+    },
+    thankyou: {
+        professional: {
+            general: "Thank you from the heart! Your kindness means so much, and I’m truly grateful.",
+            friend: "Thank you so much! Your support warms my heart, and I’m lucky to have you.",
+            colleague: "Thank you! Your help means a lot, and I respect you so much for it.",
+            relative: "Thank you, dear! Your love and support mean everything, and I’m so grateful for you."
+        },
+        friendly: {
+            general: "Thanks a million! Your kindness fills my heart with love and gratitude!",
+            friend: "Thanks, buddy! You’re amazing, and I’m so grateful for you!",
+            colleague: "Thank you! You’re the best, and I really appreciate your help!",
+            relative: "Thanks so much! I love you tons and am so thankful for you!"
+        }
+    }
+};
+    
+    let msg = messages[state.wishType]?.[state.tone]?.[state.recipientType];
+    
+    if (state.recipientType === 'relative' && state.relation && state.closeness && typeof msg === 'object') {
+        msg = msg[state.closeness];
+        if (msg && typeof msg === 'object') {
+            msg = msg[state.relation] || msg;
+        }
+    }
+    
+    return msg || "Wishing you joy, happiness, and all the best things in life.";
+}
+
+function getWishDetails() {
+    const details = {
+        birthday: { title: "Happy Birthday", closing: "Warm Wishes" },
+        anniversary: { title: "Happy Anniversary", closing: "Congratulations" },
+        wedding: { title: "Congratulations", closing: "Best Wishes" },
+        graduation: { title: "Congratulations", closing: "Best Wishes" },
+        retirement: { title: "Congratulations", closing: "Best Wishes" },
+        newyear: { title: "Happy New Year", closing: "Best Wishes" },
+        congratulations: { title: "Congratulations", closing: "Best Wishes" },
+        thankyou: { title: "Thank You", closing: "With Gratitude" }
+    };
+    return details[state.wishType] || { title: "Best Wishes", closing: "Warm Regards" };
+}
+
+function getPhotoPosition(templateNumber) {
+    const positions = ['top', 'left', 'right', 'top', 'left', 'right', 'top', 'left'];
+    const num = parseInt(templateNumber.replace('template', '')) - 1;
+    return positions[num] || 'top';
+}
+
+function renderCard() {
+    const recipientName = state.recipientName || 'Valued Recipient';
+    const senderName = state.senderName || 'Your Name';
+    const message = generateMessage();
+    const details = getWishDetails();
+    const autoPhotoPosition = 'top';  // Always top position like Template 1    
+    const photoHTML = state.currentPhoto ? 
+        `<div class="photo-wrapper photo-${autoPhotoPosition}" style="${state.photoStyle}">
+            <img src="${state.currentPhoto}" alt="Photo" class="card-photo">
+            ${card.classList.contains('edit-mode') ? `
+                <div class="resize-handle nw"></div>
+                <div class="resize-handle ne"></div>
+                <div class="resize-handle sw"></div>
+                <div class="resize-handle se"></div>
+            ` : ''}
+        </div>` : '';
+    
+    card.innerHTML = `
+        <div class="border-frame"></div>
+        ${photoHTML}
+        <div class="card-header">
+            <div class="card-title">${details.title}</div>
+            <div class="subtitle">${state.tone === 'professional' ? 'With Best Regards' : 'Celebrating You'}</div>
+        </div>
+        <div class="card-body">
+            <div class="recipient-name">${recipientName}</div>
+            <div class="ornament"></div>
+            <div class="message">${message.replace(/\n/g, '<br>')}</div>
+        </div>
+        <div class="card-footer">
+            <div class="closing">${details.closing}</div>
+            <div class="sender-name">${senderName}</div>
+        </div>
+    `;
+    
+    card.className = `greeting-card theme-${state.selectedTemplate}`;
+    if (card.classList.contains('edit-mode')) {
+        card.classList.add('edit-mode');
+        initDragAndResize();
+    }
+}
+
+// Drag and Resize
+let dragState = {
+    isDragging: false,
+    isResizing: false,
+    element: null,
+    startX: 0,
+    startY: 0,
+    startWidth: 0,
+    startHeight: 0,
+    startLeft: 0,
+    startTop: 0,
+    resizeHandle: null
+};
+
+function initDragAndResize() {
+    const photoWrapper = card.querySelector('.photo-wrapper');
+    if (!photoWrapper) return;
+    
+    photoWrapper.addEventListener('mousedown', startDragPhoto);
+    
+    const handles = photoWrapper.querySelectorAll('.resize-handle');
+    handles.forEach(handle => {
+        handle.addEventListener('mousedown', startResize);
+    });
+}
+
+function startDragPhoto(e) {
+    if (e.target.classList.contains('resize-handle')) return;
+    e.preventDefault();
+    dragState.isDragging = true;
+    dragState.element = e.currentTarget;
+    const rect = dragState.element.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    dragState.startX = e.clientX - rect.left;
+    dragState.startY = e.clientY - rect.top;
+    dragState.element.classList.add('dragging');
+    
+    document.addEventListener('mousemove', dragPhoto);
+    document.addEventListener('mouseup', stopDrag);
+}
+
+function dragPhoto(e) {
+    if (!dragState.isDragging || !dragState.element) return;
+    
+    const cardRect = card.getBoundingClientRect();
+    const newX = e.clientX - cardRect.left - dragState.startX;
+    const newY = e.clientY - cardRect.top - dragState.startY;
+    
+    const maxX = cardRect.width - dragState.element.offsetWidth;
+    const maxY = cardRect.height - dragState.element.offsetHeight;
+    
+    const constrainedX = Math.max(0, Math.min(newX, maxX));
+    const constrainedY = Math.max(0, Math.min(newY, maxY));
+    
+    dragState.element.style.left = constrainedX + 'px';
+    dragState.element.style.top = constrainedY + 'px';
+    dragState.element.style.right = 'auto';
+    dragState.element.style.transform = 'none';
+    
+    state.photoStyle = `left:${constrainedX}px;top:${constrainedY}px;width:${dragState.element.offsetWidth}px;height:${dragState.element.offsetHeight}px;right:auto;transform:none;`;
+}
+
+function startResize(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    dragState.isResizing = true;
+    dragState.element = e.currentTarget.parentElement;
+    dragState.resizeHandle = e.currentTarget.className;
+    dragState.startX = e.clientX;
+    dragState.startY = e.clientY;
+    dragState.startWidth = dragState.element.offsetWidth;
+    dragState.startHeight = dragState.element.offsetHeight;
+    const rect = dragState.element.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    dragState.startLeft = rect.left - cardRect.left;
+    dragState.startTop = rect.top - cardRect.top;
+    
+    document.addEventListener('mousemove', resizePhoto);
+    document.addEventListener('mouseup', stopResize);
+}
+
+function resizePhoto(e) {
+    if (!dragState.isResizing || !dragState.element) return;
+    
+    const deltaX = e.clientX - dragState.startX;
+    const deltaY = e.clientY - dragState.startY;
+    const handleClass = dragState.resizeHandle;
+    
+    let newSize = dragState.startWidth;
+    let newLeft = dragState.startLeft;
+    let newTop = dragState.startTop;
+    
+    if (handleClass.includes('se')) {
+        newSize = Math.max(100, Math.min(dragState.startWidth + deltaX, dragState.startWidth + deltaY));
+    } else if (handleClass.includes('sw')) {
+        newSize = Math.max(100, Math.min(dragState.startWidth - deltaX, dragState.startWidth + deltaY));
+        newLeft = dragState.startLeft + deltaX;
+    } else if (handleClass.includes('ne')) {
+        newSize = Math.max(100, Math.min(dragState.startWidth + deltaX, dragState.startWidth - deltaY));
+        newTop = dragState.startTop + deltaY;
+    } else if (handleClass.includes('nw')) {
+        newSize = Math.max(100, Math.min(dragState.startWidth - deltaX, dragState.startWidth - deltaY));
+        newLeft = dragState.startLeft + deltaX;
+        newTop = dragState.startTop + deltaY;
+    }
+    
+    dragState.element.style.width = newSize + 'px';
+    dragState.element.style.height = newSize + 'px';
+    dragState.element.style.left = newLeft + 'px';
+    dragState.element.style.top = newTop + 'px';
+    dragState.element.style.right = 'auto';
+    dragState.element.style.transform = 'none';
+    
+    state.photoStyle = `left:${newLeft}px;top:${newTop}px;width:${newSize}px;height:${newSize}px;right:auto;transform:none;`;
+}
+
+function stopDrag() {
+    if (dragState.element) {
+        dragState.element.classList.remove('dragging');
+    }
+    dragState.isDragging = false;
+    dragState.element = null;
+    document.removeEventListener('mousemove', dragPhoto);
+    document.removeEventListener('mouseup', stopDrag);
+}
+
+function stopResize() {
+    dragState.isResizing = false;
+    dragState.element = null;
+    dragState.resizeHandle = null;
+    document.removeEventListener('mousemove', resizePhoto);
+    document.removeEventListener('mouseup', stopResize);
+}
+
+function downloadCard() {
+    progress.classList.add('show');
+    const wasEditMode = card.classList.contains('edit-mode');
+    if (wasEditMode) {
+        card.classList.remove('edit-mode');
+        renderCard();
+    }
+    
+    setTimeout(() => {
+        html2canvas(card, { 
+            scale: 2, 
+            useCORS: true, 
+            allowTaint: true, 
+            backgroundColor: null,
+            logging: false
+        }).then(canvas => {
+            const link = document.createElement('a');
+            const safeName = (state.recipientName || 'Card').replace(/[^a-zA-Z0-9]/g, '_');
+            const fileName = `${state.wishType}_${safeName}.${state.selectedFormat}`;
+            link.download = fileName;
+            link.href = canvas.toDataURL(`image/${state.selectedFormat}`, state.selectedFormat === 'jpg' ? 0.92 : 1);
+            link.click();
+            progress.classList.remove('show');
+            
+            if (wasEditMode) {
+                card.classList.add('edit-mode');
+                renderCard();
+            }
+        }).catch(() => {
+            alert('Failed to generate image. Please try again.');
+            progress.classList.remove('show');
+            if (wasEditMode) {
+                card.classList.add('edit-mode');
+                renderCard();
+            }
+        });
+    }, 100);
+}
+
+// Initialize
+renderCard();
+</script>
+</body>
+</html>
